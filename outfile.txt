@@ -1,0 +1,20 @@
+Sequence Probability: -88.51778745335403
+They_O marched_O from_O the_O Houses_O of_O Parliament_org to_O a_O rally_O in_O Hyde_geo Park_geo ._O 
+Sequence Probability: -74.49848338521858
+The_O step_O will_O allow_O the_O facility_O to_O operate_O at_O full_O capacity_O ._O 
+Sequence Probability: -63.9234274445284
+The_O German_gpe firm_O works_O as_O a_O sub-contractor_O for_O Shell_org ._O 
+Sequence Probability: -45.55940860920859
+The_O arrests_O occurred_O Friday_nat in_O Alexandria_geo ._O 
+Sequence Probability: -138.0703926182477
+Some_O witnesses_O to_O the_O Sunday_org shooting_O said_O they_O feared_O the_O attack_O was_O linked_O to_O Muslim_org anger_O toward_O Pope_O Benedict_per ._O 
+Sequence Probability: -86.64958728276007
+The_O Pakistani_gpe military_O launched_O its_O offensive_O in_O Orakzai_geo to_O hunt_O Taliban_org insurgents_O ._O _O 
+Sequence Probability: -171.52681903200502
+The_O unusually_O cold_O weather_O is_O affecting_O Russia_geo ,_O the_O Baltic_geo states_O of_O Lithuania_geo ,_O Latvia_gpe and_O Estonia_geo ,_O and_O is_O moving_O into_O the_O Nordic_O countries_O ._O 
+Sequence Probability: -113.7358085424535
+The_O crash_O comes_O as_O NATO_org forces_O launched_O an_O offensive_O to_O drive_O Taleban_org remnants_O out_O of_O Kandahar_geo ._O 
+Sequence Probability: -132.7793101424998
+The_O city_O of_O Athens_org ,_O Greece_geo ,_O designated_O such_O protest_O areas_O when_O it_O hosted_O the_O Olympic_eve Games_eve in_O 2004_O ._O 
+Sequence Probability: -126.15294233207852
+Israeli_gpe Prime_per Minister_O Ehud_per Olmert_per is_O scheduled_O to_O meet_O with_O Palestinian_gpe President_per Mahmoud_per Abbas_per Wednesday_O in_O Jerusalem_geo ._O _O 
