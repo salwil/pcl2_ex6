@@ -93,10 +93,12 @@ def main(t, e, o, i):
     infile_transition_probs = t
     print('\n')
     my_pretrained_hmm = PretrainedHMM(infile_transition_probs, infile_emission_probs)
-    with open('test_sents.txt', 'r', encoding='UTF8') as data:
-        if o:
-            outfile = open(o, "w")
-        for line in data:
+    #with open('test_sents.txt', 'r', encoding='UTF8') as data:
+    if o:
+        outfile = open(o, "w", encoding='UTF8')
+    if i:
+        test_file = open(i, "r", encoding='UTF8')
+        for line in test_file:
             token_lst, calculated_probability = my_pretrained_hmm.tag_sent(line)
             out_prob = str(calculated_probability)
             outline_1 = ['Sequence Probability: ', out_prob, '\n']
@@ -115,8 +117,37 @@ def main(t, e, o, i):
             else:
                 print("".join(outline_1))
                 print("".join(outline_2))
+        test_file.close()
+    else:
+        for line in sys.stdin:
+            test_file = line
+            if test_file > ' ':
+                pass
+            else:
+                print('Missing argument')
+                break
+        token_lst, calculated_probability = my_pretrained_hmm.tag_sent(test_file)
+        out_prob = str(calculated_probability)
+        outline_1 = ['Sequence Probability: ', out_prob, '\n']
+        i = 0
+        outline_2 = []
+        for token in line.rstrip('\n').split(' '):
+            outline_2.append(token)
+            outline_2.append('_')
+            outline_2.append(token_lst[i])
+            outline_2.append(' ')
+            i+=1
+        outline_2.append('\n')
         if o:
-            outfile.close()
+            outfile.write("".join(outline_1))
+            outfile.write("".join(outline_2))
+        else:
+            print("".join(outline_1))
+            print("".join(outline_2))
+
+    if o:
+        outfile.close()
+
 
 if __name__ == '__main__':
-        main()
+    main()
