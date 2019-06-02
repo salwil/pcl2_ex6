@@ -11,10 +11,6 @@ import math
 import click
 import sys
 
-"""
-Fragen: Wahrscheinlichkeiten im logarithmischen Zahlenraum zurückgeben?
-"""
-
 class PretrainedHMM():
 
     def __init__(self,
