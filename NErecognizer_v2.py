@@ -13,7 +13,6 @@ import sys
 
 """
 Fragen: Wahrscheinlichkeiten im logarithmischen Zahlenraum zurückgeben?
-Was soll passieren, wenn der Benutzer die Option -i eingibt?
 """
 
 class PretrainedHMM():
@@ -25,101 +24,112 @@ class PretrainedHMM():
         with open(trans_probs) as tsvfile:
             reader = csv.reader(tsvfile, delimiter='\t')
             header = next(reader, None)  # skip the header
+            """
+            Our transpositions are stored in a two-dimensional dictionary which is in the following format:
+            {'BOS': {'O': BOS-O-prob, 'art': BOS-art-prob, ..., 'tim': BOS-tim-prob}, 'O': {'O': O-O-prob, 'art': O-art-
+            prob, ... 'tim': O-tim-prob}, ..., 'tim': {'O': tim-O-prob, 'art': tim-art-prob, ..., 'tim': tim-tim-prob}}
+            to be called as: trans_probs[predecessor-pt][successor-pt]
+            """
             trans_probs = defaultdict(lambda: defaultdict(lambda: 0.0))
             for row in reader:
-                """
-                order of probs per pos-tag-successor in row_log: 
-                | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
-                | O	|art|eve|geo|gpe|nat|org|per|tim|BOS|
-                """
+                # header contains predecessor pos-tags, first element per row are successor pos-tags
                 for i in range(1,len(row)):
                     pos_tag_succ = row[0]
-                    pos_tag_prec = header[i]
-                    trans_probs[pos_tag_prec][pos_tag_succ] = (math.log(float(row[i])))
+                    pos_tag_pred = header[i]
+                    # we calculate in the logarithmic room to base 2
+                    trans_probs[pos_tag_pred][pos_tag_succ] = math.log(float(row[i]), 2.0)
             self.trans_probs = trans_probs
 
         with open(emi_probs) as tsvfile:
             reader = csv.reader(tsvfile, delimiter='\t')
+            """
+            order of pos-tag probs per token (self.pos_tags): 
+            | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
+            | O	|art|eve|geo|gpe|nat|org|per|tim|
+            """
             self.pos_tags = next(reader, None)  # skip the header
             del(self.pos_tags[0]) # remove first element, which is 'head'
             self.emi_probs = defaultdict((lambda: [0 for i in range(1, len(self.pos_tags))])) # skip first element, which is key
             for row in reader:
-                """
-                order of probs pos-tag per token in row_log: 
-                | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |
-                | O	|art|eve|geo|gpe|nat|org|per|tim|
-                """
                 row_log = []
                 token = row[0]
                 for i in range(1,len(row)):
-                    row_log.append(math.log(float(row[i])))
+                    # we calculate in the logarithmic room to base 2
+                    row_log.append(math.log(float(row[i]), 2.0))
                 self.emi_probs[token] = row_log
-            print('German', self.emi_probs['German'])
-            print(self.pos_tags)
 
     def tag_sent(self,
                  tok_sent: str): #-> Tuple[List[str], float]:
         sent_lst = []
         for token in tok_sent.rstrip('\n').split(' '):
             sent_lst.append(token)
-        prev_pos_tag = 'BOS'
-        viterbi = math.log(1.0)
         viterbi_lst = [[math.log(1.0) for i in range(0, len(self.pos_tags))]
                        for j in range(0, len(sent_lst))]
-        # first token can be calculated based on V(0) = 1.0, this is final
+        # first token can be calculated based on V(0) = 1.0, this is won't be changed again.
         for i in range(0, len(self.pos_tags)):
             emi = float(self.emi_probs[sent_lst[0]][i])
+            """
+            viterbi_lst[i][j], i = 0-n, j = 0-9:
+                 | O |art|eve|geo|gpe|nat|org|per|tim|BOS|
+            tok1  0/0 0/1   ...                       0/j
+            tok2  1/0 1/1   ...                       1/j
+            tok3  
+            ...
+            toki  n/0 n/1   ...                       n/j
+            """
             viterbi_lst[0][i] = math.log(1.0) + float(self.trans_probs['BOS'][self.pos_tags[i]]) + emi
+        # loop on token-level
         for i in range(0, len(sent_lst)-1):
-            # we calculate for every
+            # loop on pos-tag level
             for j in range(0, len(self.pos_tags)):
                 # we're already calculating the emi_prob for the next token in the sentence
                 emi = float(self.emi_probs[sent_lst[i + 1]][j])
                 transp_vit = []
                 # The index of the highest result will have the
-                k = 0
+                # for every pos-tag of token(i+1) we calculate the maximum out of every transposition with the i-th
+                # pos-tag in combination with the respective viterbi-prob(i)
                 for next_pt in self.trans_probs[self.pos_tags[j]]:
+                    # transp_vit buffers the calculated transpositions between j-th pos-tag of token(i) and every pos-
+                    # tag of token(i+1) with viterbi-prob for the j-th pos-tag for token(i) and the emission-prob for
+                    # the new token(i+1).
                     transp_vit.append(float(self.trans_probs[self.pos_tags[j]][next_pt]) +
                                       float(viterbi_lst[i][j]) + emi)
-                    k += 1
+                # we get the index of the highest calculated probability for every j-th pos-tag at token(i+1)...
                 max_inx_transp_vit = np.argmax(transp_vit)
-                prev_pt_max = self.pos_tags[max_inx_transp_vit-1]
-                #viterbi_lst[i+1][j] = transp_vit[max_inx_transp_vit] + emi
+                #... and store it in our matrix at the j-th position, which is the resp. pos-tag-column.
                 viterbi_lst[i + 1][j] = transp_vit[max_inx_transp_vit]
-        out_list = ['BOS']
+        # out-list contains the pos-tag sequence with the highest viterbi-probability for every part-sequence
+        out_list = []
+        # looping through matrix, determining for each token the pos-tag with the highest viterby-prob
         for i in range (0, len(sent_lst)):
             max_indx = np.argmax(viterbi_lst[i])
             out_list.append(self.pos_tags[max_indx])
             viterbi_prob = viterbi_lst[i][max_indx]
-        del(out_list[0])
         out_tup = (out_list, viterbi_prob)
-        print(out_tup)
         return out_tup
-
-
 
 """
 Implementation for CLI
 """
 @click.command()
-#@click.option("-t", prompt="Please enter option - t", type=click.Path(),
-#              help="File containing pretrained transition probabilities.")
-#@click.option("-e", prompt="Please enter option - e", type=click.Path(),
-#              help="File containing pretrained emission probabilities.")
+@click.option("-t", prompt="Please enter option -t", type=click.Path(),
+              help="File containing pretrained transition probabilities.")
+@click.option("-e", prompt="Please enter option -e", type=click.Path(),
+              help="File containing pretrained emission probabilities.")
 @click.option("-o", type=click.Path(),
               help="File to write tagged sentences into.")
 @click.option("-i", type=click.Path(),
               help="File containing tokenized sentences.")
 
-def main(o, i):
-    #infile_emission_probs = e
-    #infile_transition_probs = t
-    infile_emission_probs = 'emission_probs.tsv'
-    infile_transition_probs = 'transition_probs.tsv'
+def main(t, e, o, i):
+    infile_emission_probs = e
+    infile_transition_probs = t
+    #infile_emission_probs = 'emission_probs.tsv'
+    #infile_transition_probs = 'transition_probs.tsv'
     print('\n')
     my_pretrained_hmm = PretrainedHMM(infile_transition_probs, infile_emission_probs)
     #with open('test_sents.txt', 'r', encoding='UTF8') as data:
-    i = 'test_sents.txt'
+    #i = 'test_sents.txt'
     if o:
         outfile = open(o, "w", encoding='UTF8')
     if i:
