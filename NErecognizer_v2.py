@@ -82,8 +82,6 @@ class PretrainedHMM():
         for i in range(0, len(sent_lst)-1):
             # loop on pos-tag level
             for j in range(0, len(self.pos_tags)):
-                # we're already calculating the emi_prob for the next token in the sentence
-                emi = float(self.emi_probs[sent_lst[i + 1]][j])
                 transp_vit = []
                 # The index of the highest result will have the
                 # for every pos-tag of token(i+1) we calculate the maximum out of every transposition with the i-th
@@ -93,11 +91,14 @@ class PretrainedHMM():
                     # tag of token(i+1) with viterbi-prob for the j-th pos-tag for token(i) and the emission-prob for
                     # the new token(i+1).
                     transp_vit.append(float(self.trans_probs[self.pos_tags[j]][next_pt]) +
-                                      float(viterbi_lst[i][j]) + emi)
-                # we get the index of the highest calculated probability for every j-th pos-tag at token(i+1)...
+                                      float(viterbi_lst[i][j]))
+                # we get the index of the highest calculated probability for every j-th pos-tag at token(i+1), ...
                 max_inx_transp_vit = np.argmax(transp_vit)
-                #... and store it in our matrix at the j-th position, which is the resp. pos-tag-column.
-                viterbi_lst[i + 1][j] = transp_vit[max_inx_transp_vit]
+                # ... calculate the emi_prob for token(i+1) in the sentence ...
+                emi = float(self.emi_probs[sent_lst[i + 1]][j])
+                #... add the probabilities and store the result in our matrix at the j-th position, which is the resp.
+                # pos-tag-column.
+                viterbi_lst[i + 1][j] = transp_vit[max_inx_transp_vit] + emi
         # out-list contains the pos-tag sequence with the highest viterbi-probability for every part-sequence
         out_list = []
         # looping through matrix, determining for each token the pos-tag with the highest viterby-prob
